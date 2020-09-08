@@ -1,8 +1,9 @@
 class UserController{
 
-    constructor(formIdCreate, tableId, boxIdCreate, boxIdUpdate){
+    constructor(formIdCreate, formIdUpdate, tableId, boxIdCreate, boxIdUpdate){
 
-        this.formEl = document.getElementById(formIdCreate);   
+        this.formEl = document.getElementById(formIdCreate); 
+        this.formUpdateEl = document.getElementById(formIdUpdate);
         this.tableEl = document.getElementById(tableId);
 
         this.boxCreate = document.getElementById(boxIdCreate);
@@ -21,6 +22,51 @@ class UserController{
 
         });
 
+        this.boxUpdate.addEventListener("submit", event => {
+
+            event.preventDefault();
+
+            let btn = this.formUpdateEl.querySelector("[type=submit]");
+
+            btn.disable = true;
+
+            let values = this.getValues(this.formUpdateEl);
+
+            let indexEdit = this.boxUpdate.dataset.trIndex;
+
+            let trIndex = this.tableEl.rows[indexEdit];
+            
+            trIndex.dataset.user = JSON.stringify(values);
+
+            trIndex.innerHTML = this.innerHtmlUser(values);
+
+            this.addEventsTr(trIndex);
+
+            this.updateCount();
+
+            this.formUpdateEl.reset();
+
+            this.showHiddenForm();
+
+        });
+
+    }
+
+    innerHtmlUser(data) {
+
+        return  `                  
+                    <td><img src="${data.photo}" alt="User Image" class="img-circle img-sm"></td>
+                    <td>${data.name}</td>
+                    <td>${data.email}</td>
+                    <td>${(data.admin?"sim":"não")}</td>
+                    <td>${Utils.dateFormat(data.register)}</td>
+                    <td>
+                        <button type="button" class="btn btn-edit btn-primary btn-xs btn-flat">Editar</button>
+                        <button type="button" class="btn btn-danger btn-xs btn-flat">Excluir</button>
+                    </td>
+                `;
+
+
     }
 
     onSubmit(){
@@ -33,7 +79,7 @@ class UserController{
 
             btnSubmit.disable = true;
 
-            let values = this.getValues();
+            let values = this.getValues(this.formEl);
 
             if (!values) return false;
 
@@ -105,12 +151,12 @@ class UserController{
 
     }
 
-    getValues(){
+    getValues(formEl){
 
         let user = {};
         let isValid = true;
         
-        [...this.formEl.elements].forEach((field, index) => {
+        [...formEl.elements].forEach((field, index) => {
 
             if(['name','email','password'].indexOf(field.name) > -1 && !field.value){
 
@@ -160,34 +206,58 @@ class UserController{
 
     addLine(dataUser){
     
-       let tr = document.createElement("tr");
+        let tr = document.createElement("tr");
 
-       tr.dataset.user = JSON.stringify(dataUser);
-    
-            tr.innerHTML = 
-                    `                  
-                        <td><img src="${dataUser.photo}" alt="User Image" class="img-circle img-sm"></td>
-                        <td>${dataUser.name}</td>
-                        <td>${dataUser.email}</td>
-                        <td>${(dataUser.admin?"sim":"não")}</td>
-                        <td>${Utils.dateFormat(dataUser.register)}</td>
-                        <td>
-                            <button type="button" class="btn btn-edit btn-primary btn-xs btn-flat">Editar</button>
-                            <button type="button" class="btn btn-danger btn-xs btn-flat">Excluir</button>
-                        </td>
-                    `;
+        tr.dataset.user = JSON.stringify(dataUser);
 
-                    tr.querySelector('.btn-edit').addEventListener("click", e=>{
+        tr.innerHTML = this.innerHtmlUser(dataUser);
 
-                        //console.log(JSON.parse(tr.dataset.user));
+        this.addEventsTr(tr);
 
-                        this.showHiddenForm();
+        this.tableEl.appendChild(tr);
 
-                    });
-    
-                    this.tableEl.appendChild(tr);
+        this.updateCount();
+    }
 
-                    this.updateCount();
+    addEventsTr(tr){
+
+        tr.querySelector('.btn-edit').addEventListener("click", e=>{
+
+            let json = JSON.parse(tr.dataset.user);
+
+            this.boxUpdate.dataset.trIndex = tr.sectionRowIndex;
+
+            for (let name in json){
+
+                let fieldBoxUpdate = this.boxUpdate.querySelector("[name=" + name.replace("_","") + "]");
+
+                if (fieldBoxUpdate){
+
+                    switch (fieldBoxUpdate.type) {
+
+                        case 'file':
+                            continue;
+                            break;
+                        case 'radio':
+                            fieldBoxUpdate = this.boxUpdate.querySelector("[name=" + name.replace("_","") + "][value=" + json[name] + "]");
+                            fieldBoxUpdate.checked = true;
+                            break;
+                        case 'checkbox':
+                            fieldBoxUpdate.checked = json[name];
+                            break;
+                        default:
+                            fieldBoxUpdate.value =json[name];
+
+                    }
+                    
+                }
+                   
+            }
+
+            this.showHiddenForm();
+
+        });
+
     }
 
     showHiddenForm(){
