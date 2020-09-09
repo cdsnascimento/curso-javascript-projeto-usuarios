@@ -26,27 +26,52 @@ class UserController{
 
             event.preventDefault();
 
-            let btn = this.formUpdateEl.querySelector("[type=submit]");
+            let btnEditSubmit = this.formUpdateEl.querySelector("[type=submit]");
 
-            btn.disable = true;
+            btnEditSubmit.disable = true;
 
             let values = this.getValues(this.formUpdateEl);
 
-            let indexEdit = this.boxUpdate.dataset.trIndex;
+            let indexEdit = this.formUpdateEl.dataset.trIndex;
 
             let trIndex = this.tableEl.rows[indexEdit];
+
+            let userOld = JSON.parse(trIndex.dataset.user);
             
-            trIndex.dataset.user = JSON.stringify(values);
+            let result = Object.assign({},userOld,values)
 
-            trIndex.innerHTML = this.innerHtmlUser(values);
+            
 
-            this.addEventsTr(trIndex);
+            this.getPhoto(this.formUpdateEl).then(
+                (content) => {
 
-            this.updateCount();
+                    if(!values.photo) {
+                        result._photo = userOld._photo;
+                    } else {
+                        result._photo = content;                                   
+                    }
 
-            this.formUpdateEl.reset();
+                    trIndex.dataset.user = JSON.stringify(result);
 
-            this.showHiddenForm();
+                    trIndex.innerHTML = this.innerHtmlUser(result);
+
+                    this.addEventsTr(trIndex);
+
+                    this.updateCount();
+
+                    this.formUpdateEl.reset();
+
+                    btnEditSubmit.disable = false;
+
+                    this.showHiddenForm();
+                },
+                (e) => {
+
+                    console.error(e);
+
+                }
+            
+            );
 
         });
 
@@ -55,11 +80,11 @@ class UserController{
     innerHtmlUser(data) {
 
         return  `                  
-                    <td><img src="${data.photo}" alt="User Image" class="img-circle img-sm"></td>
-                    <td>${data.name}</td>
-                    <td>${data.email}</td>
-                    <td>${(data.admin?"sim":"não")}</td>
-                    <td>${Utils.dateFormat(data.register)}</td>
+                    <td><img src="${data._photo}" alt="User Image" class="img-circle img-sm"></td>
+                    <td>${data._name}</td>
+                    <td>${data._email}</td>
+                    <td>${(data._admin?"sim":"não")}</td>
+                    <td>${Utils.dateFormat(data._register)}</td>
                     <td>
                         <button type="button" class="btn btn-edit btn-primary btn-xs btn-flat">Editar</button>
                         <button type="button" class="btn btn-danger btn-xs btn-flat">Excluir</button>
@@ -83,7 +108,7 @@ class UserController{
 
             if (!values) return false;
 
-            this.getPhoto().then(
+            this.getPhoto(this.formEl).then(
                 (content) => {
 
                     values.photo = content;
@@ -106,13 +131,13 @@ class UserController{
 
     }
 
-    getPhoto(){
+    getPhoto(form){
 
         return new Promise((resolve, reject) => {
 
             let fileReader = new FileReader();
 
-            let elements = [...this.formEl.elements].filter(item => {
+            let elements = [...form.elements].filter(item => {
     
                 if (item.name === 'photo') {
     
@@ -225,11 +250,11 @@ class UserController{
 
             let json = JSON.parse(tr.dataset.user);
 
-            this.boxUpdate.dataset.trIndex = tr.sectionRowIndex;
+            this.formUpdateEl.dataset.trIndex = tr.sectionRowIndex;
 
             for (let name in json){
 
-                let fieldBoxUpdate = this.boxUpdate.querySelector("[name=" + name.replace("_","") + "]");
+                let fieldBoxUpdate = this.formUpdateEl.querySelector("[name=" + name.replace("_","") + "]");
 
                 if (fieldBoxUpdate){
 
@@ -253,6 +278,8 @@ class UserController{
                 }
                    
             }
+
+            this.formUpdateEl.querySelector(".photo").src = json._photo;
 
             this.showHiddenForm();
 
