@@ -1,3 +1,4 @@
+
 class UserController{
 
     constructor(formIdCreate, formIdUpdate, tableId, boxIdCreate, boxIdUpdate){
@@ -53,11 +54,13 @@ class UserController{
                         result._photo = content;                                   
                     }
 
-                    trIndex.dataset.user = JSON.stringify(result);
+                    let user = new User();
 
-                    trIndex.innerHTML = this.innerHtmlUser(result);
+                    user.loadFromJSON(result);
 
-                    this.addEventsTr(trIndex);
+                    user.save();
+
+                    this.innerHtmlUser(user, trIndex);
 
                     this.updateCount();
 
@@ -76,23 +79,6 @@ class UserController{
             );
 
         });
-
-    }
-
-    innerHtmlUser(data) {
-
-        return  `                  
-                    <td><img src="${data._photo}" alt="User Image" class="img-circle img-sm"></td>
-                    <td>${data._name}</td>
-                    <td>${data._email}</td>
-                    <td>${(data._admin?"sim":"não")}</td>
-                    <td>${Utils.dateFormat(data._register)}</td>
-                    <td>
-                        <button type="button" class="btn btn-edit btn-primary btn-xs btn-flat">Editar</button>
-                        <button type="button" class="btn btn-danger btn-delete btn-xs btn-flat">Excluir</button>
-                    </td>
-                `;
-
 
     }
 
@@ -115,7 +101,7 @@ class UserController{
 
                     values.photo = content;
 
-                    this.insertUser(values);
+                    values.save();
 
                     this.addLine(values);
 
@@ -271,32 +257,36 @@ class UserController{
 
     }
 
-    insertUser(dataUser){
-
-        let users = this.getUsersStorage();
-
-        users.push(dataUser);
-
-        sessionStorage.setItem("users", JSON.stringify(users));
-        localStorage.setItem("users", JSON.stringify(users));
-
-    }
-
     addLine(dataUser){
     
-        let tr = document.createElement("tr");
-
-        
-
-        tr.dataset.user = JSON.stringify(dataUser);
-
-        tr.innerHTML = this.innerHtmlUser(dataUser);
-
-        this.addEventsTr(tr);
+        let tr = this.innerHtmlUser(dataUser);
 
         this.tableEl.appendChild(tr);
 
         this.updateCount();
+    }
+
+    innerHtmlUser(data, tr = null) {
+
+        if(tr === null) tr = document.createElement("tr");
+
+        tr.dataset.user = JSON.stringify(data);
+
+        tr.innerHTML =  `                  
+                            <td><img src="${data.photo}" alt="User Image" class="img-circle img-sm"></td>
+                            <td>${data.name}</td>
+                            <td>${data.email}</td>
+                            <td>${(data.admin?"sim":"não")}</td>
+                            <td>${Utils.dateFormat(data.register)}</td>
+                            <td>
+                                <button type="button" class="btn btn-edit btn-primary btn-xs btn-flat">Editar</button>
+                                <button type="button" class="btn btn-danger btn-delete btn-xs btn-flat">Excluir</button>
+                            </td>
+                        `;
+
+                        this.addEventsTr(tr);
+
+                        return tr;
     }
 
     addEventsTr(tr){
