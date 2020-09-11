@@ -219,31 +219,9 @@ class UserController{
     
     }
 
-
-    getUsersStorage(){
-
-        let users = [];
-
-        if(localStorage.getItem("users")) {
-
-            users = JSON.parse(localStorage.getItem("users"));
-
-        }
-        
-        /*  SESSION STORAGE
-        if(sessionStorage.getItem("users")) {
-
-            users = JSON.parse(sessionStorage.getItem("users"));
-
-        }
-        */
-        return users;
-
-    }
-
     selectAll(){
 
-        let users = this.getUsersStorage();
+        let users =  User.getUsersStorage();
 
         users.forEach(dataUser => {
 
@@ -295,7 +273,14 @@ class UserController{
 
             if(confirm("Deseja relamente excluir?")){
 
+                let user = new User();
+
+                user.loadFromJSON(JSON.parse(tr.dataset.user));
+
+                user.remove();
+
                 tr.remove();
+
                 this.updateCount();
 
             }
